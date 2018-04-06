@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:share/share.dart';
 
 import 'model/todo_entry.dart';
 import 'todo_entry_dialog.dart';
@@ -70,7 +71,26 @@ class TodoListPageState extends State<TodoListPage> {
 
               _editSectionTitle = !_editSectionTitle;
             }),
-          )
+          ),
+          new IconButton(
+            icon: new Icon(Icons.share),
+            tooltip: "Share section",
+            onPressed: () {
+              var shareString = "${data.getSection(_selectedSection)}:\n";
+
+              for (var item in data.getTodo(_selectedSection)) {
+                var importanceChar = '';
+                switch (item.importance) {
+                  case TodoImportance.Middle: importanceChar = '!'; break;
+                  case TodoImportance.High: importanceChar = '!!'; break;
+                  default: importanceChar = '';
+                }
+
+                shareString += "[${item.done ? 'x' : '  '}] $importanceChar ${item.title}\n";
+              }
+
+              share(shareString);
+            })
         ],
       ),
       body: _buildTodoList(),
