@@ -17,11 +17,11 @@ class TodoEntryDialog extends StatefulWidget {
 
   @override
   TodoEntryDialogState createState() {
-    if (entryToEdit != null)
-      return new TodoEntryDialogState(
-          entryToEdit.title, entryToEdit.importance);
-    else
+    if (entryToEdit != null) {
+      return new TodoEntryDialogState(entryToEdit.title, entryToEdit.importance);
+    } else {
       return new TodoEntryDialogState("", TodoImportance.Low);
+    }
   }
 }
 
@@ -49,14 +49,11 @@ class TodoEntryDialogState extends State<TodoEntryDialog> {
         ? new IconButton(
             icon: new Icon(Icons.delete, color: Colors.white),
             tooltip: "Delete",
-            onPressed: () => setState(() {
-              new DataManager().deleteTodo(widget.entryToEdit.id);
-              Navigator.pop(context);
-            },
-          ))
+            onPressed: _deleteTodo,
+          )
         : new Container(),
         new IconButton(
-          icon: new Icon(Icons.save, color: Colors.white,),
+          icon: new Icon(Icons.save, color: Colors.white),
           tooltip: "Save",
           onPressed: () {
             Navigator
@@ -123,5 +120,30 @@ class TodoEntryDialogState extends State<TodoEntryDialog> {
                 ],
               )),
         ]));
+  }
+
+  void _deleteTodo() async {    
+    var confirmDelete = await showDialog<bool>(
+      context: context,
+      child: new AlertDialog(
+        title: const Text("Are you sure you want to delete this?"),
+        actions: [
+          new FlatButton(
+            child: const Text("Yes"),
+            onPressed: () => Navigator.of(context).pop(true),
+          ),
+          new FlatButton(
+            child: const Text("No"),
+            onPressed: () => Navigator.of(context).pop(false),
+          )
+        ],
+      )
+    ) ?? false;
+
+    if (!confirmDelete)
+      return;
+
+    setState(() => new DataManager().deleteTodo(widget.entryToEdit.id));
+    Navigator.pop(context);
   }
 }

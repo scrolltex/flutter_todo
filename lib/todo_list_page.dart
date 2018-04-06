@@ -56,10 +56,14 @@ class TodoListPageState extends State<TodoListPage> {
           _editSectionTitle
               ? new IconButton(
                   icon: new Icon(Icons.delete),
+                  tooltip: "Delete section",
                   onPressed: () => _deleteSection(_selectedSection))
               : new Container(),
           new IconButton(
             icon: new Icon(_editSectionTitle ? Icons.save : Icons.edit),
+            tooltip: _editSectionTitle 
+              ? "Save new title" 
+              : "Edit section title",
             onPressed: () => setState(() {
               if (_editSectionTitle)
                 data.updateSection(_selectedSection, _titleEditingController.text);
@@ -72,7 +76,7 @@ class TodoListPageState extends State<TodoListPage> {
       body: _buildTodoList(),
       floatingActionButton: new FloatingActionButton(
         onPressed: _openAddEntryDialog,
-        tooltip: 'Add new todo entry',
+        tooltip: 'Add new ToDo',
         child: new Icon(Icons.add),
       ),
     );
@@ -100,7 +104,7 @@ class TodoListPageState extends State<TodoListPage> {
 
     drawerItems.add(new DecoratedBox(
       child: new Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(24.0),
         child: new Text(
           'ToDo list',
           //textAlign: TextAlign.center,
@@ -115,14 +119,17 @@ class TodoListPageState extends State<TodoListPage> {
 
     // Sections
     drawerItems.add(new Padding(
-        padding: const EdgeInsets.only(left: 16.0, right: 16.0),
+        padding: const EdgeInsets.only(left: 16.0),
         child: new Row(children: [
           new Expanded(
-              child:
-                  new Text("Sections", style: new TextStyle(fontSize: 22.0))),
+              child: new Text(
+                "Sections", 
+                style: new TextStyle(
+                  fontSize: 22.0, 
+                  fontWeight: FontWeight.w500))),
           new IconButton(
             icon: new Icon(Icons.add),
-            alignment: Alignment.centerRight,
+            tooltip: "Add new section",
             onPressed: _addSection,
           ),
         ])));
@@ -139,14 +146,34 @@ class TodoListPageState extends State<TodoListPage> {
 
     drawerItems.add(new Divider());
 
+
+
     return new Drawer(child: new ListView(primary: false, children: drawerItems));
   }
 
-  void _addSection() {
-    setState(() => data.addSection(data.getSectionNextId(), "New Section"));
-  }
+  void _addSection() => setState(() => data.addSection(data.getSectionNextId(), "New Section"));
 
-  void _deleteSection(int sectionId) {
+  void _deleteSection(int sectionId) async {
+    var confirmDelete = await showDialog<bool>(
+      context: context,
+      child: new AlertDialog(
+        title: const Text("Are you sure you want to delete this?"),
+        actions: [
+          new FlatButton(
+            child: const Text("Yes"),
+            onPressed: () => Navigator.of(context).pop(true),
+          ),
+          new FlatButton(
+            child: const Text("No"),
+            onPressed: () => Navigator.of(context).pop(false),
+          )
+        ],
+      )
+    ) ?? false;
+
+    if (!confirmDelete)
+      return;
+
     setState(() {
       data.deleteSection(sectionId);
       _editSectionTitle = false;
@@ -164,12 +191,10 @@ class TodoListPageState extends State<TodoListPage> {
   }
 
   Future _openAddEntryDialog() async {
-    var entry =
-        await Navigator.of(context).push(new MaterialPageRoute<TodoEntryModel>(
-            builder: (BuildContext context) {
-              return new TodoEntryDialog.add(_selectedSection);
-            },
-            fullscreenDialog: true));
+    var entry = await Navigator.of(context).push(
+        new MaterialPageRoute<TodoEntryModel>(
+          builder: (BuildContext context) => new TodoEntryDialog.add(_selectedSection),
+          fullscreenDialog: true));
 
     if (entry != null) _addTodoListEntry(entry);
   }
@@ -190,8 +215,7 @@ class TodoListPageState extends State<TodoListPage> {
             fullscreenDialog: true));
 
     setState(() {
-      if (newEntry != null)
-        data.updateTodo(entry.id, (newEntry as TodoEntryModel));
+      if (newEntry != null) data.updateTodo(entry.id, (newEntry as TodoEntryModel));
       _selectSection(_selectedSection);
     });
   }
@@ -210,14 +234,11 @@ class TodoListItemState extends State<TodoListItem> {
   @override
   Widget build(BuildContext context) {
     return new Padding(
-        padding: new EdgeInsets.all(8.0),
+        padding: const EdgeInsets.all(8.0),
         child: new Row(children: [
           new Checkbox(
             value: widget.entry.done,
-            onChanged: (newValue) => setState(() {
-                  widget.entry.done = newValue;
-                }),
-          ),
+            onChanged: (newValue) => setState(() => widget.entry.done = newValue)),
           getImportanceIcon(widget.entry.importance),
           new Text(
             widget.entry.title,
