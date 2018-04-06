@@ -1,37 +1,41 @@
 import 'package:flutter/material.dart';
-
 import 'model/todo_entry.dart';
+import 'data_manager.dart';
 
 class TodoEntryDialog extends StatefulWidget {
   final TodoEntryModel entryToEdit;
+  final int id;
+  final int sectionId;
 
-  TodoEntryDialog.add() : entryToEdit = null;
-  TodoEntryDialog.edit(this.entryToEdit);
+  TodoEntryDialog.add(this.sectionId) 
+    : id = new DataManager().getTodoNextId(), 
+      entryToEdit = null;
+
+  TodoEntryDialog.edit(this.entryToEdit) 
+    : id = entryToEdit.id,
+      sectionId = entryToEdit.section;
 
   @override
   TodoEntryDialogState createState() {
     if (entryToEdit != null)
       return new TodoEntryDialogState(
-          entryToEdit.title, "", entryToEdit.importance);
+          entryToEdit.title, entryToEdit.importance);
     else
-      return new TodoEntryDialogState("", "", TodoImportance.Low);
+      return new TodoEntryDialogState("", TodoImportance.Low);
   }
 }
 
 class TodoEntryDialogState extends State<TodoEntryDialog> {
   TextEditingController _titleTextEditingController;
-  TextEditingController _noteTextEditingController;
 
   String _title;
-  String _note;
   TodoImportance _importance;
 
-  TodoEntryDialogState(this._title, this._note, this._importance);
+  TodoEntryDialogState(this._title, this._importance);
 
   @override
   void initState() {
     _titleTextEditingController = new TextEditingController(text: _title);
-    _noteTextEditingController = new TextEditingController(text: _note);
     super.initState();
   }
 
@@ -41,20 +45,23 @@ class TodoEntryDialogState extends State<TodoEntryDialog> {
           ? const Text("New TODO")
           : const Text("Edit TODO"),
       actions: [
-        new IconButton(
+        widget.entryToEdit != null
+        ? new IconButton(
             icon: new Icon(Icons.delete, color: Colors.white),
             tooltip: "Delete",
-            onPressed: () {
-              //TODO: Delete todo entry
+            onPressed: () => setState(() {
+              new DataManager().deleteTodo(widget.entryToEdit.id);
+              Navigator.pop(context);
             },
-          ),
+          ))
+        : new Container(),
         new IconButton(
           icon: new Icon(Icons.save, color: Colors.white,),
           tooltip: "Save",
           onPressed: () {
             Navigator
                 .of(context)
-                .pop(new TodoEntryModel(_title, _importance, widget.entryToEdit?.done ?? false));
+                .pop(new TodoEntryModel(widget.id, widget.sectionId, _title, _importance, widget.entryToEdit?.done ?? false));
           },
         ),
       ],
@@ -74,17 +81,6 @@ class TodoEntryDialogState extends State<TodoEntryDialog> {
               ),
               controller: _titleTextEditingController,
               onChanged: (value) => _title = value,
-            ),
-          ),
-          new ListTile(
-            leading: new Icon(Icons.speaker_notes, color: Colors.grey[500]),
-            title: new TextField(
-              decoration: new InputDecoration(
-                hintText: 'Optional note',
-              ),
-              maxLines: 4,
-              controller: _noteTextEditingController,
-              onChanged: (value) => _note = value,
             ),
           ),
           new ListTile(
