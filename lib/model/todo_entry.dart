@@ -5,11 +5,12 @@ enum TodoImportance {
 }
 
 class TodoEntryModel {
-  TodoEntryModel(this.id, this.section, this.title, this.importance, this.done);
+  TodoEntryModel(this.id, this.section, this.title, this.note, this.importance, this.done);
 
   int id;
   int section;
   String title;
+  String note;
   TodoImportance importance;
   bool done;
 }

@@ -110,8 +110,7 @@ class TodoListPageState extends State<TodoListPage> {
       itemCount: _todoList.length,
       itemBuilder: (context, index) {
         return new InkWell(
-          onTap: () =>
-              setState(() => _todoList[index].done = !_todoList[index].done),
+          onTap: () => _showTodoBottomSheet(_todoList[index]),
           onLongPress: () => _editTodoEntry(_todoList[index]),
           child: new TodoListItem(entry: _todoList[index]),
         );
@@ -171,21 +170,51 @@ class TodoListPageState extends State<TodoListPage> {
     return new Drawer(child: new ListView(primary: false, children: drawerItems));
   }
 
+  void _showTodoBottomSheet(TodoEntryModel model) {
+    assert(model != null);
+
+    showModalBottomSheet<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return new ListView(children: <Widget>[
+          new ListTile(
+            leading: new Icon(Icons.title),
+            title: new Text(model.title),
+            trailing: getImportanceIcon(model.importance)),
+          new ListTile(
+            leading: new Icon(Icons.category),
+            title: new Text(data.getSection(model.section))),
+          new ListTile(
+            leading: new Icon(Icons.note),
+            title: new Text(
+              model.note.isNotEmpty ? model.note : "(Empty)", 
+              maxLines: 5)
+          )]
+        );
+      });
+  }
+
   void _addSection() => setState(() => data.addSection(data.getSectionNextId(), "New Section"));
 
   void _deleteSection(int sectionId) async {
+    final ThemeData theme = Theme.of(context);
+    final TextStyle dialogTextStyle = theme.textTheme.subhead.copyWith(color: theme.textTheme.caption.color);
+
     var confirmDelete = await showDialog<bool>(
       context: context,
       child: new AlertDialog(
-        title: const Text("Are you sure you want to delete this?"),
+        title: new Text(
+          "Delete this todo?",
+          style: dialogTextStyle
+        ),
         actions: [
           new FlatButton(
-            child: const Text("Yes"),
-            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text("CANCEL"),
+            onPressed: () => Navigator.of(context).pop(false),
           ),
           new FlatButton(
-            child: const Text("No"),
-            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text("DELETE"),
+            onPressed: () => Navigator.of(context).pop(true),
           )
         ],
       )
@@ -253,19 +282,15 @@ class TodoListItem extends StatefulWidget {
 class TodoListItemState extends State<TodoListItem> {
   @override
   Widget build(BuildContext context) {
-    return new Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: new Row(children: [
-          new Checkbox(
-            value: widget.entry.done,
-            onChanged: (newValue) => setState(() => widget.entry.done = newValue)),
-          getImportanceIcon(widget.entry.importance),
-          new Text(
-            widget.entry.title,
-            style: new TextStyle(
-              fontSize: 18.0, 
-              decoration: widget.entry.done ? TextDecoration.lineThrough : null),
-          )
-        ]));
+    return new ListTile(
+      leading: new Checkbox(
+        value: widget.entry.done,
+        onChanged: (newValue) => setState(() => widget.entry.done = newValue)),
+      title: new Text(
+        widget.entry.title,
+        style: new TextStyle(
+          fontSize: 18.0, 
+          decoration: widget.entry.done ? TextDecoration.lineThrough : null)),
+      trailing: getImportanceIcon(widget.entry.importance));
   }
 }

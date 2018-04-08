@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'model/todo_entry.dart';
+
 import 'data_manager.dart';
 
 class TodoEntryDialog extends StatefulWidget {
@@ -16,26 +19,31 @@ class TodoEntryDialog extends StatefulWidget {
       sectionId = entryToEdit.section;
 
   @override
-  TodoEntryDialogState createState() {
-    if (entryToEdit != null) {
-      return new TodoEntryDialogState(entryToEdit.title, entryToEdit.importance);
-    } else {
-      return new TodoEntryDialogState("", TodoImportance.Low);
-    }
-  }
+  TodoEntryDialogState createState() => new TodoEntryDialogState();
 }
 
 class TodoEntryDialogState extends State<TodoEntryDialog> {
   TextEditingController _titleTextEditingController;
+  TextEditingController _noteTextEditingController;
 
   String _title;
   TodoImportance _importance;
+  String _note;
+  bool _saveNeeded = false;
 
-  TodoEntryDialogState(this._title, this._importance);
+  VoidCallback _saveCallback;
 
   @override
   void initState() {
+    _title = widget.entryToEdit?.title ?? "";
+    _importance = widget.entryToEdit?.importance ?? TodoImportance.Low;
+    _note = widget.entryToEdit?.note ?? "";
+
     _titleTextEditingController = new TextEditingController(text: _title);
+    _noteTextEditingController = new TextEditingController(text: _note);
+
+    _saveCallback = null;
+
     super.initState();
   }
 
@@ -55,86 +63,144 @@ class TodoEntryDialogState extends State<TodoEntryDialog> {
         new IconButton(
           icon: new Icon(Icons.save, color: Colors.white),
           tooltip: "Save",
-          onPressed: () {
-            Navigator
-                .of(context)
-                .pop(new TodoEntryModel(widget.id, widget.sectionId, _title, _importance, widget.entryToEdit?.done ?? false));
-          },
+          onPressed: _saveCallback,
         ),
       ],
     );
+  }
+
+  void _saveEntry() {
+    Navigator
+      .of(context)
+      .pop(new TodoEntryModel(
+        widget.id, 
+        widget.sectionId, 
+        _title,
+        _note, 
+        _importance, 
+        widget.entryToEdit?.done ?? false));
   }
 
   @override
   Widget build(BuildContext context) {
     return new Scaffold(
         appBar: _createAppBar(context),
-        body: new Column(children: <Widget>[
-          new ListTile(
-            leading: new Icon(Icons.title, color: Colors.grey[500]),
-            title: new TextField(
-              decoration: new InputDecoration(
-                hintText: 'Title',
+        body: new Form(
+          onWillPop: _onWillPop, 
+          child: new ListView(children: <Widget>[
+            new ListTile(
+              leading: new Icon(Icons.title, color: Colors.grey[500]),
+              title: new TextField(
+                decoration: new InputDecoration(
+                  hintText: 'Title',
+                ),
+                controller: _titleTextEditingController,
+                onChanged: (value) {
+                  _title = value;
+                  _saveNeeded = true;
+                }
               ),
-              controller: _titleTextEditingController,
-              onChanged: (value) => _title = value,
             ),
-          ),
-          new ListTile(
-              leading: new Icon(Icons.info_outline, color: Colors.grey[500]),
-              title: new Row(
-                children: <Widget>[
-                  new IconButton(
-                    icon: new Icon(Icons.info_outline,
-                        color: _importance == TodoImportance.Low
-                            ? Colors.lightBlue
-                            : Colors.grey[600]),
-                    onPressed: () {
-                      setState(() {
+            new ListTile(
+                leading: new Icon(Icons.info_outline, color: Colors.grey[500]),
+                title: new Row(
+                  children: <Widget>[
+                    new IconButton(
+                      icon: new Icon(Icons.info_outline,
+                          color: _importance == TodoImportance.Low
+                              ? Colors.lightBlue
+                              : Colors.grey[600]),
+                      onPressed: () => setState(() {
                         _importance = TodoImportance.Low;
-                      });
-                    },
-                  ),
-                  new IconButton(
-                    icon: new Icon(Icons.warning,
-                        color: _importance == TodoImportance.Middle
-                            ? Colors.yellow
-                            : Colors.grey[600]),
-                    onPressed: () {
-                      setState(() {
+                        _saveNeeded = true;
+                      }),
+                    ),
+                    new IconButton(
+                      icon: new Icon(Icons.warning,
+                          color: _importance == TodoImportance.Middle
+                              ? Colors.yellow
+                              : Colors.grey[600]),
+                      onPressed: () => setState(() {
                         _importance = TodoImportance.Middle;
-                      });
-                    },
-                  ),
-                  new IconButton(
-                    icon: new Icon(Icons.error,
-                        color: _importance == TodoImportance.High
-                            ? Colors.red
-                            : Colors.grey[600]),
-                    onPressed: () {
-                      setState(() {
+                        _saveNeeded = true;
+                      }),
+                    ),
+                    new IconButton(
+                      icon: new Icon(Icons.error,
+                          color: _importance == TodoImportance.High
+                              ? Colors.red
+                              : Colors.grey[600]),
+                      onPressed: () => setState(() {
                         _importance = TodoImportance.High;
-                      });
-                    },
-                  ),
-                ],
-              )),
-        ]));
+                        _saveNeeded = true;
+                      }),
+                    ),
+                  ],
+                )),
+            new ListTile(
+              leading: new Icon(Icons.note),
+              title: new TextField(
+                controller: _noteTextEditingController,
+                onChanged: (value) {
+                  _note = value;
+                  _saveNeeded = true;
+                },
+                maxLines: 5,
+              )
+            ),    
+          ]
+        )
+      )
+    );
+  }
+
+  Future<bool> _onWillPop() async {
+    if (!_saveNeeded)
+      return true;
+      
+    final ThemeData theme = Theme.of(context);
+    final TextStyle dialogTextStyle = theme.textTheme.subhead.copyWith(color: theme.textTheme.caption.color);
+
+    return await showDialog<bool>(
+      context: context,
+      child: new AlertDialog(
+          content: new Text(
+            'Discard new event?',
+            style: dialogTextStyle
+          ),
+          actions: <Widget>[
+            new FlatButton(
+              child: const Text('CANCEL'),
+              onPressed: () =>  Navigator.of(context).pop(false)
+            ),
+            new FlatButton(
+              child: const Text('DISCARD'),
+              onPressed: () =>  Navigator.of(context).pop(true)
+            )
+          ],
+        )
+    ) ?? false;
   }
 
   void _deleteTodo() async {    
+    final ThemeData theme = Theme.of(context);
+    final TextStyle dialogTextStyle = theme.textTheme.subhead.copyWith(color: theme.textTheme.caption.color);
+
     var confirmDelete = await showDialog<bool>(
       context: context,
       child: new AlertDialog(
-        title: const Text("Are you sure you want to delete this?"),
+        title: new Text(
+          "Delete this todo?",
+          style: dialogTextStyle
+        ),
         actions: [
           new FlatButton(
-            child: const Text("Yes"),
-            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text("CANCEL"),
+            onPressed: () => Navigator.of(context).pop(false),
           ),
           new FlatButton(
-            child: const Text("No"),
-            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text("DELETE"),
+            onPressed: () => Navigator.of(context).pop(true),
           )
         ],
       )

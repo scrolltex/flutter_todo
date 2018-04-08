@@ -9,12 +9,12 @@ class DataManager {
   }
 
   var _todoList = <TodoEntryModel>[
-    new TodoEntryModel(0, 0, "Make a sandwich", TodoImportance.Low, false),
-    new TodoEntryModel(1, 1, "Make clean", TodoImportance.Low, false),
-    new TodoEntryModel(2, 1, "Buy a new chair", TodoImportance.Low, true),
-    new TodoEntryModel(1, 1, "Assemble the chair", TodoImportance.Middle, false),
-    new TodoEntryModel(3, 2, "Rent a hall", TodoImportance.High, false),
-    new TodoEntryModel(4, 3, "Complete the new feature", TodoImportance.Middle, false),
+    new TodoEntryModel(0, 0, "Make a sandwich", "", TodoImportance.Low, false),
+    new TodoEntryModel(1, 1, "Make clean", "", TodoImportance.Low, false),
+    new TodoEntryModel(2, 1, "Buy a new chair", "", TodoImportance.Low, true),
+    new TodoEntryModel(1, 1, "Assemble the chair", "", TodoImportance.Middle, false),
+    new TodoEntryModel(3, 2, "Rent a hall", "", TodoImportance.High, false),
+    new TodoEntryModel(4, 3, "Complete the new feature", "", TodoImportance.Middle, false),
   ];
 
   var _sections = <int, String>{
