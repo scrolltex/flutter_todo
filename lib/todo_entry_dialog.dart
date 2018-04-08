@@ -92,7 +92,8 @@ class TodoEntryDialogState extends State<TodoEntryDialog> {
               leading: new Icon(Icons.title, color: Colors.grey[500]),
               title: new TextField(
                 decoration: new InputDecoration(
-                  hintText: 'Title',
+                  labelText: "Title",
+                  hintText: 'What you want to do?',
                 ),
                 controller: _titleTextEditingController,
                 onChanged: (value) {
@@ -141,11 +142,15 @@ class TodoEntryDialogState extends State<TodoEntryDialog> {
               leading: new Icon(Icons.note),
               title: new TextField(
                 controller: _noteTextEditingController,
+                decoration: new InputDecoration(                  
+                  labelText: "Note",
+                  hintText: "Additional notes",
+                ),
+                maxLines: 5,
                 onChanged: (value) {
                   _note = value;
                   _saveNeeded = true;
                 },
-                maxLines: 5,
               )
             ),    
           ]
