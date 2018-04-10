@@ -9,20 +9,20 @@ class DataManager {
   }
 
   var _todoList = <TodoEntryModel>[
-    new TodoEntryModel(0, 0, "Make a sandwich", "", TodoImportance.Low, false),
-    new TodoEntryModel(1, 1, "Make clean", "", TodoImportance.Low, false),
-    new TodoEntryModel(2, 1, "Buy a new chair", "", TodoImportance.Low, true),
-    new TodoEntryModel(1, 1, "Assemble the chair", "", TodoImportance.Middle, false),
-    new TodoEntryModel(3, 2, "Rent a hall", "", TodoImportance.High, false),
-    new TodoEntryModel(4, 3, "Complete the new feature", "", TodoImportance.Middle, false),
+    new TodoEntryModel(0, 0, title: "Make a sandwich"),
+    new TodoEntryModel(1, 1, title: "Make clean"),
+    new TodoEntryModel(2, 1, title: "Buy a new chair", done: true),
+    new TodoEntryModel(1, 1, title: "Assemble the chair", importance: TodoImportance.Middle),
+    new TodoEntryModel(3, 2, title: "Rent a hall", importance: TodoImportance.High),
+    new TodoEntryModel(4, 3, title: "Complete the new feature", importance: TodoImportance.Middle),
   ];
 
-  var _sections = <int, String>{
-    0: 'Default',
-    1: 'Home',
-    2: 'Birtday',
-    3: 'Project',
-  };
+  var _sections = <SectionModel>[
+    new SectionModel(0, 'Default'),
+    new SectionModel(1, 'Home'),
+    new SectionModel(2, 'Birtday'),
+    new SectionModel(3, 'Project')
+  ];
 
   /// Return next id of todos
   num getTodoNextId() {
@@ -42,7 +42,9 @@ class DataManager {
   void addTodo(TodoEntryModel model) => _todoList.add(model);
 
   /// Update
-  void updateTodo(int id, TodoEntryModel newModel) => _todoList[id] = newModel;
+  void updateTodo(TodoEntryModel oldModel, TodoEntryModel newModel) {
+     _todoList[_todoList.indexOf(oldModel)] = newModel;
+  }
 
   /// Delete todo entry by id
   void deleteTodo(int id) => _todoList.removeWhere((item) => item.id == id);
@@ -50,29 +52,33 @@ class DataManager {
   /// Return next id of sections
   int getSectionNextId() {
     num maxId = 0;
-    for (var key in _sections.keys) {
-      if(key > maxId)
-        maxId = key;
+    for (var entry in _sections) {
+      if(entry.id > maxId)
+        maxId = entry.id;
     }
 
     return maxId + 1;
   }
 
   /// Return all sections
-  Map<int, String> getSections() => _sections;
+  Iterable<SectionModel> getSections() => _sections;
 
   /// Return section by id
-  String getSection(int id) => _sections[id];
+  SectionModel getSection(int id) => _sections.singleWhere((model) => model.id == id);
 
   /// Update section title by id
-  void updateSection(int id, String title) => _sections[id] = title;
+  void updateSection(SectionModel oldModel, SectionModel newModel) {
+     _sections[_sections.indexOf(oldModel)] = newModel;
+  } 
 
   /// Add new section with specified  id and title
-  void addSection(int id, String title) => _sections.addAll({id: title});
+  void addSection(SectionModel model) {
+     _sections.add(model);
+  }
   
   /// Delete section by id
-  void deleteSection(int id) {
-    _todoList.removeWhere((item) => item.section == id);
-    _sections.remove(id);
+  void deleteSection(SectionModel model) {
+    _todoList.removeWhere((item) => item.section == model.id);
+    _sections.remove(model);
   }
 }

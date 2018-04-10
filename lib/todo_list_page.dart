@@ -26,7 +26,7 @@ class TodoListPage extends StatefulWidget {
 }
 
 class TodoListPageState extends State<TodoListPage> {
-  int _selectedSection = 0;
+  SectionModel _selectedSection = new DataManager().getSection(0);
   List<TodoEntryModel> _todoList = new List();
   ScrollController _listViewScrollController = new ScrollController();
   TextEditingController _titleEditingController;
@@ -37,8 +37,8 @@ class TodoListPageState extends State<TodoListPage> {
 
   @override
   void initState() {
-    _selectSection(0);
-    _titleEditingController = new TextEditingController(text: data.getSection(_selectedSection));
+    _selectSection(data.getSection(0));
+    _titleEditingController = new TextEditingController(text: _selectedSection.title);
     super.initState();
   }
 
@@ -52,7 +52,7 @@ class TodoListPageState extends State<TodoListPage> {
                 controller: _titleEditingController,
                 decoration: new InputDecoration(hintText: "Section title"),
                 style: new TextStyle(color: Colors.white))
-            : new Text("${data.getSection(_selectedSection)}"),
+            : new Text("${_selectedSection.title}"),
         actions: [
           _editSectionTitle
               ? new IconButton(
@@ -67,7 +67,7 @@ class TodoListPageState extends State<TodoListPage> {
               : "Edit section title",
             onPressed: () => setState(() {
               if (_editSectionTitle)
-                data.updateSection(_selectedSection, _titleEditingController.text);
+                data.updateSection(_selectedSection, new SectionModel(_selectedSection.id, _titleEditingController.text));
 
               _editSectionTitle = !_editSectionTitle;
             }),
@@ -76,9 +76,9 @@ class TodoListPageState extends State<TodoListPage> {
             icon: new Icon(Icons.share),
             tooltip: "Share section",
             onPressed: () {
-              var shareString = "${data.getSection(_selectedSection)}:\n";
+              var shareString = "${_selectedSection.title}:\n";
 
-              for (var item in data.getTodo(_selectedSection)) {
+              for (var item in data.getTodo(_selectedSection.id)) {
                 var importanceChar = '';
                 switch (item.importance) {
                   case TodoImportance.Middle: importanceChar = '!'; break;
@@ -153,12 +153,12 @@ class TodoListPageState extends State<TodoListPage> {
           ),
         ])));
 
-    for (var idx in data.getSections().keys) {
+    for (var model in data.getSections()) {
       drawerItems.add(new FlatButton(
-          child: new Text(data.getSection(idx),
+          child: new Text(model.title,
               style: new TextStyle(fontSize: 16.0)),
           onPressed: () {
-            _selectSection(idx);
+            _selectSection(model);
             Navigator.pop(context);
           }));
     }
@@ -183,7 +183,7 @@ class TodoListPageState extends State<TodoListPage> {
             trailing: getImportanceIcon(model.importance)),
           new ListTile(
             leading: new Icon(Icons.category),
-            title: new Text(data.getSection(model.section))),
+            title: new Text(data.getSection(model.section).title)),
           new ListTile(
             leading: new Icon(Icons.note),
             title: new Text(
@@ -194,9 +194,9 @@ class TodoListPageState extends State<TodoListPage> {
       });
   }
 
-  void _addSection() => setState(() => data.addSection(data.getSectionNextId(), "New Section"));
+  void _addSection() => setState(() => data.addSection(new SectionModel(data.getSectionNextId(), "New Section")));
 
-  void _deleteSection(int sectionId) async {
+  void _deleteSection(SectionModel section) async {
     final ThemeData theme = Theme.of(context);
     final TextStyle dialogTextStyle = theme.textTheme.subhead.copyWith(color: theme.textTheme.caption.color);
 
@@ -204,7 +204,7 @@ class TodoListPageState extends State<TodoListPage> {
       context: context,
       child: new AlertDialog(
         title: new Text(
-          "Delete this todo?",
+          "Delete this section?",
           style: dialogTextStyle
         ),
         actions: [
@@ -224,25 +224,25 @@ class TodoListPageState extends State<TodoListPage> {
       return;
 
     setState(() {
-      data.deleteSection(sectionId);
+      data.deleteSection(section);
       _editSectionTitle = false;
-      if (_selectedSection == sectionId)
-        _selectSection(data.getSections().keys.elementAt(0));
+      if (_selectedSection.id == section.id)
+        _selectSection(data.getSections().elementAt(0));
     });
   }
 
-  void _selectSection(int sectionId) {
+  void _selectSection(SectionModel section) {
     setState(() {
       _editSectionTitle = false;
-      _todoList = data.getTodo(sectionId).toList();
-      _selectedSection = sectionId;
+      _todoList = data.getTodo(section.id).toList();
+      _selectedSection = section;
     });
   }
 
   Future _openAddEntryDialog() async {
     var entry = await Navigator.of(context).push(
         new MaterialPageRoute<TodoEntryModel>(
-          builder: (BuildContext context) => new TodoEntryDialog.add(_selectedSection),
+          builder: (BuildContext context) => new TodoEntryDialog.add(_selectedSection.id),
           fullscreenDialog: true));
 
     if (entry != null) _addTodoListEntry(entry);
@@ -251,7 +251,7 @@ class TodoListPageState extends State<TodoListPage> {
   void _addTodoListEntry(TodoEntryModel entry) {
     setState(() {
       data.addTodo(entry);
-      _selectSection(entry.section);
+      _selectSection(data.getSection(entry.section));
     });
   }
 
@@ -264,7 +264,7 @@ class TodoListPageState extends State<TodoListPage> {
             fullscreenDialog: true));
 
     setState(() {
-      if (newEntry != null) data.updateTodo(entry.id, (newEntry as TodoEntryModel));
+      if (newEntry != null) data.updateTodo(entry, (newEntry as TodoEntryModel));
       _selectSection(_selectedSection);
     });
   }

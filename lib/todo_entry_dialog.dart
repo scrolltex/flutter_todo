@@ -23,28 +23,23 @@ class TodoEntryDialog extends StatefulWidget {
 }
 
 class TodoEntryDialogState extends State<TodoEntryDialog> {
-  TextEditingController _titleTextEditingController;
-  TextEditingController _noteTextEditingController;
+  final GlobalKey<FormState> _formKey = new GlobalKey<FormState>();  
+  final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
 
-  String _title;
-  TodoImportance _importance;
-  String _note;
+  TodoEntryModel model;
   bool _saveNeeded = false;
-
-  VoidCallback _saveCallback;
+  bool _autovalidate = false;
 
   @override
   void initState() {
-    _title = widget.entryToEdit?.title ?? "";
-    _importance = widget.entryToEdit?.importance ?? TodoImportance.Low;
-    _note = widget.entryToEdit?.note ?? "";
-
-    _titleTextEditingController = new TextEditingController(text: _title);
-    _noteTextEditingController = new TextEditingController(text: _note);
-
-    _saveCallback = null;
-
+    model = widget.entryToEdit ?? new TodoEntryModel(widget.id, widget.sectionId);
     super.initState();
+  }
+
+  void showInSnackBar(String value) {
+    _scaffoldKey.currentState.showSnackBar(new SnackBar(
+      content: new Text(value)
+    ));
   }
 
   Widget _createAppBar(BuildContext context) {
@@ -63,43 +58,48 @@ class TodoEntryDialogState extends State<TodoEntryDialog> {
         new IconButton(
           icon: new Icon(Icons.save, color: Colors.white),
           tooltip: "Save",
-          onPressed: _saveCallback,
+          onPressed: _saveEntry,
         ),
       ],
     );
   }
 
-  void _saveEntry() {
-    Navigator
-      .of(context)
-      .pop(new TodoEntryModel(
-        widget.id, 
-        widget.sectionId, 
-        _title,
-        _note, 
-        _importance, 
-        widget.entryToEdit?.done ?? false));
+  void _saveEntry() {    
+    final FormState form = _formKey.currentState;
+    if (form.validate()) {
+      form.save();
+      Navigator.of(context).pop(model);
+    } else {
+      _autovalidate = true;
+      showInSnackBar('Please fix the errors in red before saving.');
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return new Scaffold(
+        key: _scaffoldKey,
         appBar: _createAppBar(context),
         body: new Form(
+          key: _formKey,
+          autovalidate: true,
           onWillPop: _onWillPop, 
           child: new ListView(children: <Widget>[
             new ListTile(
               leading: new Icon(Icons.title, color: Colors.grey[500]),
-              title: new TextField(
+              title: new TextFormField(
+                initialValue: model.title,
                 decoration: new InputDecoration(
-                  labelText: "Title",
-                  hintText: 'What you want to do?',
+                  labelText: "Title *",
+                  hintText: 'What do you want to do?',
                 ),
-                controller: _titleTextEditingController,
-                onChanged: (value) {
-                  _title = value;
+                onSaved: (String value) => model.title = value,                
+                validator: (String value) {
                   _saveNeeded = true;
-                }
+
+                  if (value.isEmpty)
+                    return "Title is required.";
+                },
               ),
             ),
             new ListTile(
@@ -108,31 +108,31 @@ class TodoEntryDialogState extends State<TodoEntryDialog> {
                   children: <Widget>[
                     new IconButton(
                       icon: new Icon(Icons.info_outline,
-                          color: _importance == TodoImportance.Low
+                          color: model.importance == TodoImportance.Low
                               ? Colors.lightBlue
                               : Colors.grey[600]),
                       onPressed: () => setState(() {
-                        _importance = TodoImportance.Low;
+                        model.importance = TodoImportance.Low;
                         _saveNeeded = true;
                       }),
                     ),
                     new IconButton(
                       icon: new Icon(Icons.warning,
-                          color: _importance == TodoImportance.Middle
+                          color: model.importance == TodoImportance.Middle
                               ? Colors.yellow
                               : Colors.grey[600]),
                       onPressed: () => setState(() {
-                        _importance = TodoImportance.Middle;
+                        model.importance = TodoImportance.Middle;
                         _saveNeeded = true;
                       }),
                     ),
                     new IconButton(
                       icon: new Icon(Icons.error,
-                          color: _importance == TodoImportance.High
+                          color: model.importance == TodoImportance.High
                               ? Colors.red
                               : Colors.grey[600]),
                       onPressed: () => setState(() {
-                        _importance = TodoImportance.High;
+                        model.importance = TodoImportance.High;
                         _saveNeeded = true;
                       }),
                     ),
@@ -140,16 +140,17 @@ class TodoEntryDialogState extends State<TodoEntryDialog> {
                 )),
             new ListTile(
               leading: new Icon(Icons.note),
-              title: new TextField(
-                controller: _noteTextEditingController,
+              title: new TextFormField(
+                initialValue: model.note,
                 decoration: new InputDecoration(                  
                   labelText: "Note",
                   hintText: "Additional notes",
                 ),
                 maxLines: 5,
-                onChanged: (value) {
-                  _note = value;
+                onSaved: (String value) => model.note = value,
+                validator: (String value) {
                   _saveNeeded = true;
+                  return null;
                 },
               )
             ),    
@@ -170,7 +171,7 @@ class TodoEntryDialogState extends State<TodoEntryDialog> {
       context: context,
       child: new AlertDialog(
           content: new Text(
-            'Discard new event?',
+            'Discard changes?',
             style: dialogTextStyle
           ),
           actions: <Widget>[
