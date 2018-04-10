@@ -120,7 +120,8 @@ class TodoListPageState extends State<TodoListPage> {
 
   Widget _buildDrawer(BuildContext context) {
     var drawerItems = <Widget>[];
-
+    final ThemeData theme = Theme.of(context);
+    
     drawerItems.add(new DecoratedBox(
       child: new Padding(
         padding: const EdgeInsets.all(24.0),
@@ -137,35 +138,35 @@ class TodoListPageState extends State<TodoListPage> {
     ));
 
     // Sections
+    final TextStyle subheadStyle = theme.textTheme.subhead.copyWith(color: theme.textTheme.caption.color);
     drawerItems.add(new Padding(
-        padding: const EdgeInsets.only(left: 16.0),
-        child: new Row(children: [
-          new Expanded(
-              child: new Text(
-                "Sections", 
-                style: new TextStyle(
-                  fontSize: 22.0, 
-                  fontWeight: FontWeight.w500))),
-          new IconButton(
-            icon: new Icon(Icons.add),
-            tooltip: "Add new section",
-            onPressed: _addSection,
-          ),
-        ])));
+      padding: const EdgeInsets.only(left: 16.0),
+      child: new Row(children: [
+        new Expanded(
+          child: new Text(
+            "Sections", 
+            style: subheadStyle)
+        ),
+        new IconButton(
+          icon: new Icon(Icons.add),
+          tooltip: "Add new section",
+          onPressed: _addSection,
+        ),
+      ])
+    ));
 
     for (var model in data.getSections()) {
-      drawerItems.add(new FlatButton(
-          child: new Text(model.title,
-              style: new TextStyle(fontSize: 16.0)),
-          onPressed: () {
-            _selectSection(model);
-            Navigator.pop(context);
-          }));
+      drawerItems.add(new ListTile(
+        title: new Text(model.title),
+        selected: _selectedSection == model,
+        onTap: () {
+          _selectSection(model);
+          Navigator.pop(context);
+        })
+      );
     }
 
     drawerItems.add(new Divider());
-
-
 
     return new Drawer(child: new ListView(primary: false, children: drawerItems));
   }
