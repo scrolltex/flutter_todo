@@ -43,7 +43,7 @@ class DataManager {
 
   /// Update
   void updateTodo(TodoEntryModel oldModel, TodoEntryModel newModel) {
-     _todoList[_todoList.indexOf(oldModel)] = newModel;
+    _todoList[_todoList.indexWhere((model) => model.id == oldModel.id)] = newModel;
   }
 
   /// Delete todo entry by id
@@ -68,7 +68,7 @@ class DataManager {
 
   /// Update section title by id
   void updateSection(SectionModel oldModel, SectionModel newModel) {
-     _sections[_sections.indexOf(oldModel)] = newModel;
+     _sections[_sections.indexWhere((model) => model.id == oldModel.id)] = newModel;
   } 
 
   /// Add new section with specified  id and title
