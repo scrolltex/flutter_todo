@@ -103,18 +103,17 @@ class TodoListPageState extends State<TodoListPage> {
   }
 
   Widget _buildTodoList() {
-    return new ListView.builder(
+    var list = _todoList.map((entry) => new InkWell(
+      onTap: () => _showTodoBottomSheet(entry),
+      onLongPress: () => _editTodoEntry(entry),
+      child: new TodoListItem(entry: entry),
+    ));
+
+    return new ListView(
       shrinkWrap: true,
       reverse: true,
       controller: _listViewScrollController,
-      itemCount: _todoList.length,
-      itemBuilder: (context, index) {
-        return new InkWell(
-          onTap: () => _showTodoBottomSheet(_todoList[index]),
-          onLongPress: () => _editTodoEntry(_todoList[index]),
-          child: new TodoListItem(entry: _todoList[index]),
-        );
-      },
+      children: ListTile.divideTiles(context: context, tiles: list).toList()
     );
   }
 
@@ -174,13 +173,16 @@ class TodoListPageState extends State<TodoListPage> {
   void _showTodoBottomSheet(TodoEntryModel model) {
     assert(model != null);
 
+    final ThemeData theme = Theme.of(context);
+    final TextStyle titleTextStyle = theme.textTheme.title.copyWith(color: theme.textTheme.title.color);
+
     showModalBottomSheet<void>(
       context: context,
       builder: (BuildContext context) {
         return new ListView(children: <Widget>[
           new ListTile(
             leading: new Icon(Icons.title),
-            title: new Text(model.title),
+            title: new Text(model.title, style: titleTextStyle),
             trailing: getImportanceIcon(model.importance)),
           new ListTile(
             leading: new Icon(Icons.category),
@@ -292,6 +294,7 @@ class TodoListItemState extends State<TodoListItem> {
         style: new TextStyle(
           fontSize: 18.0, 
           decoration: widget.entry.done ? TextDecoration.lineThrough : null)),
+      subtitle: widget.entry.note.isNotEmpty ? new Text(widget.entry.note, maxLines: 1,overflow: TextOverflow.ellipsis,) : null,
       trailing: getImportanceIcon(widget.entry.importance));
   }
 }
