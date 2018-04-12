@@ -27,8 +27,15 @@ Icon getImportanceIcon(TodoImportance importance) {
 class TodoListViewModel {
   final List<TodoEntryModel> todos;
   final Function(TodoEntryModel) addEntryCallback;
+  final Function(TodoEntryModel) updateEntryCallback;
+  final Function(TodoEntryModel) deleteEntryCallback;
 
-  TodoListViewModel({this.todos, this.addEntryCallback});
+  TodoListViewModel({
+    this.todos,
+    this.addEntryCallback,
+    this.updateEntryCallback,
+    this.deleteEntryCallback
+  });
 }
 
 class TodoListPage extends StatefulWidget {
@@ -53,7 +60,12 @@ class TodoListPageState extends State<TodoListPage> {
               .where((todo) => todo.section == widget.section.id)
               .toList(),
           addEntryCallback: (entry) =>
-              store.dispatch(new AddTodoAction(entry))),
+              store.dispatch(new AddTodoAction(entry)),
+          updateEntryCallback: (entry) =>
+              store.dispatch(new UpdateTodoAction(entry)),
+          deleteEntryCallback: (entry) =>
+              store.dispatch(new DeleteTodoAction(entry)),
+      ),
       builder: (context, viewModel) {
         return new Scaffold(
           appBar: new AppBar(
@@ -86,7 +98,7 @@ class TodoListPageState extends State<TodoListPage> {
 
     var list = viewModel.todos.map((entry) => new InkWell(
           onTap: () => _showTodoBottomSheet(entry),
-          //onLongPress: () => _editTodoEntry(entry),
+          onLongPress: () => _editTodoEntry(viewModel, entry),
           child: new TodoListItem(entry: entry),
         ));
 
@@ -145,35 +157,31 @@ class TodoListPageState extends State<TodoListPage> {
     share(shareString);
   }
 
-  void _addTodoListEntry(TodoListViewModel viewModel, TodoEntryModel entry) {
-    setState(() {
-      viewModel.addEntryCallback(entry);
-    });
-  }
-
-  Future _openAddEntryDialog(TodoListViewModel viewModel) async {
+  void _openAddEntryDialog(TodoListViewModel viewModel) async {
     var entry = await Navigator.of(context).push(
         new MaterialPageRoute<TodoEntryModel>(
-            builder: (BuildContext context) =>
-                new TodoEntryDialog.add(widget.section.id),
-            fullscreenDialog: true));
+          builder: (context) => new TodoEntryDialog.add(widget.section.id),
+          fullscreenDialog: true
+        )
+    );
 
-    if (entry != null) _addTodoListEntry(viewModel, entry);
+    if (entry != null) {
+      setState(() => viewModel.addEntryCallback(entry));
+    }
   }
 
-  /*void _editTodoEntry(TodoEntryModel entry) async {
-    _editSectionTitle = false;
-
-    var newEntry = await Navigator.of(context).push(
+  void _editTodoEntry(TodoListViewModel viewModel, TodoEntryModel entry) async {
+    var newEntry = await Navigator.of(context).push<TodoEntryModel>(
         new MaterialPageRoute<TodoEntryModel>(
-            builder: (BuildContext context) => new TodoEntryDialog.edit(entry),
-            fullscreenDialog: true));
+          builder: (context) => new TodoEntryDialog.edit(entry),
+          fullscreenDialog: true
+        )
+    );
 
-    setState(() {
-      if (newEntry != null) data.updateTodo(entry, (newEntry as TodoEntryModel));
-      _selectSection(_selectedSection);
-    });
-  }*/
+    if (newEntry != null) {
+      setState(() => viewModel.updateEntryCallback(newEntry));
+    }
+  }
 }
 
 class TodoListItem extends StatefulWidget {

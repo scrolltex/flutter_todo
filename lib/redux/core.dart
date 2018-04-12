@@ -41,6 +41,21 @@ ReduxState stateReducer(ReduxState state, action) {
         ..add(action.section.copyWith(id: maxId + 1)));
   }
 
+  if (action is UpdateSectionAction) {
+    var newSections = <SectionModel>[]..addAll(state.sections);
+    newSections[newSections.indexOf(action.section)] = action.section;
+    
+    return state.copyWith(sections: newSections);
+  }
+
+  if (action is DeleteSectionAction) {    
+    return state.copyWith(
+      sections: <SectionModel>[]
+        ..addAll(state.sections)
+        ..remove(action.section)
+    );
+  }
+
   if (action is AddTodoAction) {
     int maxId = 0;
     for (var todo in state.todos) {
@@ -53,6 +68,21 @@ ReduxState stateReducer(ReduxState state, action) {
       todos: <TodoEntryModel>[]
         ..addAll(state.todos)
         ..add(action.todo.copyWith(id: maxId + 1)));
+  }
+
+  if (action is UpdateTodoAction) {
+    var newTodos = <TodoEntryModel>[]..addAll(state.todos);
+    newTodos[newTodos.indexOf(action.todo)] = action.todo;
+    
+    return state.copyWith(todos: newTodos);
+  }
+
+  if (action is DeleteTodoAction) {    
+    return state.copyWith(
+      todos: <TodoEntryModel>[]
+        ..addAll(state.todos)
+        ..remove(action.todo)
+    );
   }
 
   return state;
