@@ -61,7 +61,7 @@ class SectionsPage extends StatelessWidget {
       return new InkWell(
         onTap: () => Navigator.of(context).push(new MaterialPageRoute(
           builder: (context) => new TodoListPage(entry))),
-        onLongPress: () => _showActionsMenu(context, viewModel, entry),//_editSection(context, viewModel.updateSectionCallback, entry),
+        onLongPress: () => _showActionsMenu(context, viewModel, entry),
         child: new ListTile(
           title: new Text('${entry.title} (${doneTodosInSection.length}/${todosInSection.length})'),
           trailing: new Icon(Icons.arrow_right),
@@ -102,64 +102,83 @@ class SectionsPage extends StatelessWidget {
       if (isEditOrDelete) {
         _editSection(context, viewModel, section);
       } else {
-        viewModel.deleteSectionCallback(section);
+        _deleteSection(context, viewModel, section);
       }
     }
   }
 
   void _addNewSection(BuildContext context, SectionsViewModel viewModel) async {
-    var title = await showDialog<String>(
-        context: context, builder: (context) => new AddSectionDialog());
+    var section = await showDialog<SectionModel>(
+      context: context, 
+      builder: (context) => new SectionDialog.add()
+    );
 
-    if (title != null && title.isNotEmpty)
-      viewModel.addSectionCallback(new SectionModel(id: 0, title: title));
+    if (section != null) {
+      viewModel.addSectionCallback(section);
+    }
   }
 
   void _editSection(BuildContext context, SectionsViewModel viewModel, SectionModel section) async {
     var updated = await showDialog<SectionModel>(
-        context: context, builder: (context) => new EditSectionDialog(section));
-      
-    if (updated != null)
-      viewModel.updateSectionCallback(updated);
-  }
-}
-
-class AddSectionDialog extends StatelessWidget {
-  final _textEditingController = new TextEditingController();
-
-  @override
-  Widget build(BuildContext context) {
-    return new AlertDialog(
-      title: new Text("Add new section"),
-      content: new TextField(controller: _textEditingController),
-      actions: <Widget>[
-        new FlatButton(
-            child: new Text("CANCEL"),
-            onPressed: () => Navigator.of(context).pop(null)),
-        new FlatButton(
-          child: new Text("ADD"),
-          onPressed: () =>
-              Navigator.of(context).pop(_textEditingController.text),
-        )
-      ],
+      context: context, 
+      builder: (context) => new SectionDialog.edit(section)
     );
+      
+    if (updated != null) {
+      viewModel.updateSectionCallback(updated);
+    }
+  }
+
+  void _deleteSection(BuildContext context, SectionsViewModel viewModel, SectionModel section) async {
+    var confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return new AlertDialog(
+          title: new Text("Are you sure you want to delete?"),
+          content: new Text("Section `${section.title}` and all associated entries will be deleted."),
+          actions: <Widget>[
+            new FlatButton(
+              child: new Text("CANCEL"),
+              onPressed: () => Navigator.of(context).pop(false)
+            ),
+            new FlatButton(
+              child: new Text("DELETE"),
+              onPressed: () => Navigator.of(context).pop(true)
+            )
+          ],
+        );
+      }
+    ) ?? false;
+
+    if (confirmed) {      
+      viewModel.deleteSectionCallback(section);
+    }
   }
 }
 
-class EditSectionDialog extends StatefulWidget {
-  final SectionModel section;
+class SectionDialog extends StatefulWidget {
+  final SectionModel sectionToEdit;
 
-  EditSectionDialog(this.section);
+  SectionDialog.add() : sectionToEdit = null;
+
+  SectionDialog.edit(this.sectionToEdit);
 
   @override
-  EditSectionDialogState createState() => new EditSectionDialogState();
+  SectionDialogState createState() => new SectionDialogState();
 }
 
-class EditSectionDialogState extends State<EditSectionDialog> {
+class SectionDialogState extends State<SectionDialog> {
+  SectionModel section;
   final _formKey = new GlobalKey<FormState>();
-
   bool _autovalidate = false;
-  bool valid = false;
+
+  bool get isEditing => widget.sectionToEdit != null;
+
+  @override
+  void initState() {
+    section = isEditing ? widget.sectionToEdit : new SectionModel(id: 0, title: "");
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -167,11 +186,11 @@ class EditSectionDialogState extends State<EditSectionDialog> {
     key: _formKey,
     autovalidate: _autovalidate,      
     child: new AlertDialog(
-      title: new Text("Edit section"),
+      title: new Text(isEditing ? "Edit section" : "Add section"),
       content:  new TextFormField(
-        initialValue: widget.section.title,
+        initialValue: isEditing ? widget.sectionToEdit.title : '',
         validator: (str) => str.isEmpty ? "Required" : null,
-        onSaved: (str) => widget.section.title = str,
+        onSaved: (str) => section.title = str,
       ),
       actions: <Widget>[
         new FlatButton(
@@ -179,7 +198,7 @@ class EditSectionDialogState extends State<EditSectionDialog> {
           onPressed: () => Navigator.of(context).pop(null)
         ),
         new FlatButton(
-          child: new Text("SAVE"),
+          child: new Text(isEditing ? "SAVE" : "ADD"),
           onPressed: _save
         )
       ],
@@ -192,7 +211,7 @@ class EditSectionDialogState extends State<EditSectionDialog> {
       _autovalidate = true;
     } else {      
       form.save();
-      Navigator.of(context).pop(widget.section);
+      Navigator.of(context).pop(section);
     }
   }
 }
