@@ -43,7 +43,7 @@ ReduxState stateReducer(ReduxState state, action) {
 
   if (action is UpdateSectionAction) {
     var newSections = <SectionModel>[]..addAll(state.sections);
-    newSections[newSections.indexOf(action.section)] = action.section;
+    newSections[newSections.indexWhere((section) => section.id == action.section.id)] = action.section;
     
     return state.copyWith(sections: newSections);
   }
@@ -72,7 +72,7 @@ ReduxState stateReducer(ReduxState state, action) {
 
   if (action is UpdateTodoAction) {
     var newTodos = <TodoEntryModel>[]..addAll(state.todos);
-    newTodos[newTodos.indexOf(action.todo)] = action.todo;
+    newTodos[newTodos.indexWhere((todo) => todo.id == action.todo.id)] = action.todo;
     
     return state.copyWith(todos: newTodos);
   }

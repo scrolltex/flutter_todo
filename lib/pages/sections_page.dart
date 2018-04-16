@@ -10,9 +10,10 @@ import 'todo_list_page.dart';
 @immutable
 class SectionsViewModel {
   final List<SectionModel> sections;
+  final List<TodoEntryModel> todos;
   final Function(SectionModel) addSectionCallback;
 
-  SectionsViewModel({this.sections, this.addSectionCallback});
+  SectionsViewModel({this.sections, this.todos, this.addSectionCallback});
 }
 
 class SectionsPage extends StatelessWidget {
@@ -23,6 +24,7 @@ class SectionsPage extends StatelessWidget {
     return new StoreConnector<ReduxState, SectionsViewModel>(
       converter: (store) => new SectionsViewModel(
           sections: store.state.sections,
+          todos: store.state.todos,
           addSectionCallback: (section) =>
               store.dispatch(new AddSectionAction(section))),
       builder: (context, viewModel) {
@@ -46,14 +48,19 @@ class SectionsPage extends StatelessWidget {
     final ThemeData theme = Theme.of(context);
     final TextStyle textStyle = theme.textTheme.subhead.copyWith(color: theme.textTheme.caption.color);
 
-    var list = viewModel.sections.map((entry) => new InkWell(
-          onTap: () => Navigator.of(context).push(new MaterialPageRoute(
-              builder: (context) => new TodoListPage(entry))),
-          child: new ListTile(
-            title: new Text(entry.title),
-            trailing: new Icon(Icons.arrow_right),
-          ),
-        ));
+    var list = viewModel.sections.map((entry) {
+      var todosInSection = viewModel.todos.where((todo) => todo.section == entry.id);
+      var doneTodosInSection = todosInSection.where((todo) => todo.done);
+
+      return new InkWell(
+        onTap: () => Navigator.of(context).push(new MaterialPageRoute(
+          builder: (context) => new TodoListPage(entry))),
+        child: new ListTile(
+          title: new Text('${entry.title} (${doneTodosInSection.length}/${todosInSection.length})'),
+          trailing: new Icon(Icons.arrow_right),
+        ),
+      );
+    });
 
     return list.length > 0
         ? new ListView(
