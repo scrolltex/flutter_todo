@@ -93,7 +93,7 @@ class TodoListPageState extends State<TodoListPage> {
       final TextStyle textStyle = theme.textTheme.subhead
           .copyWith(color: theme.textTheme.caption.color);
           
-      return new Center(child: new Text("No sections", style: textStyle));
+      return new Center(child: new Text("No entries", style: textStyle));
     }
 
     var list = viewModel.todos.map((entry) => new InkWell(
