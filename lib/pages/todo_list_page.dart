@@ -193,25 +193,17 @@ class TodoListItem extends StatefulWidget {
   TodoListItemState createState() => new TodoListItemState();
 }
 
-class TodoListItemViewModel {
-  final Function(TodoEntryModel) updateEntryCallback;
-
-  TodoListItemViewModel({this.updateEntryCallback});
-}
-
 class TodoListItemState extends State<TodoListItem> {
   @override
   Widget build(BuildContext context) {
-    return new StoreConnector<ReduxState, TodoListItemViewModel>(
-      converter: (store) => new TodoListItemViewModel(
-        updateEntryCallback: (entry) => store.dispatch(new UpdateTodoAction(entry))
-      ),
-      builder: (context, viewModel) {
+    return new StoreConnector<ReduxState, Function(TodoEntryModel)>(
+      converter: (store) => ((entry) => store.dispatch(new UpdateTodoAction(entry))),
+      builder: (context, updateEntryCallback) {
         return new ListTile(
         leading: new Checkbox(
           value: widget.entry.done,
           onChanged: (newValue) => setState(() {
-            viewModel.updateEntryCallback(widget.entry.copyWith(done: newValue));
+            updateEntryCallback(widget.entry.copyWith(done: newValue));
           })
         ),
         title: new Text(widget.entry.title,
