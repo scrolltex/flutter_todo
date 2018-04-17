@@ -37,7 +37,7 @@ class SectionsPage extends StatelessWidget {
       builder: (context, viewModel) {
         return new Scaffold(
           appBar: new AppBar(
-            title: const Text("Sections"),
+            title: new Text("Sections"),
           ),
           body: _buildSectionsList(context, viewModel),
           floatingActionButton: new FloatingActionButton(

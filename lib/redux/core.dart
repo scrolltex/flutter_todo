@@ -1,4 +1,7 @@
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
+import 'package:redux_persist/redux_persist.dart';
 
 import '../model/todo_entry.dart';
 import 'actions.dart';
@@ -24,9 +27,40 @@ class ReduxState {
       todos: todos ?? this.todos,
       sections: sections ?? this.sections
   );
+
+  static ReduxState fromJson(dynamic jsonObj) {
+    // Parsing sections
+    var loadedSectionsList = new List<SectionModel>();
+    var loadedSections = json.decode(jsonObj['sections']);
+    for (var item in loadedSections) {
+      loadedSectionsList.add(new SectionModel.fromJson(item));
+    }
+
+    // Parsing todos
+    var loadedTodosList = new List<TodoEntryModel>();
+    var loadedTodos = json.decode(jsonObj['todos']);
+    for (var item in loadedTodos) {
+      loadedTodosList.add(new TodoEntryModel.fromJson(item));
+    }
+
+    // Return state
+    return new ReduxState(
+      todos: loadedTodosList,
+      sections: loadedSectionsList
+    );
+  }
+
+  Map toJson() => {
+    'todos': json.encode(todos),
+    'sections': json.encode(sections)
+  };
 }
 
 ReduxState stateReducer(ReduxState state, action) {
+  if (action is PersistLoadedAction<ReduxState>) {
+    return action.state ?? state;
+  }
+  
   if (action is AddSectionAction) {    
     int maxId = 0;
     for (var section in state.sections) {

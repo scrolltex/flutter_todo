@@ -1,4 +1,7 @@
 import 'package:flutter/foundation.dart';
+import 'package:json_annotation/json_annotation.dart';
+
+part 'todo_entry.g.dart';
 
 enum TodoImportance {
   Low,
@@ -6,7 +9,8 @@ enum TodoImportance {
   High,
 }
 
-class TodoEntryModel {
+@JsonSerializable()
+class TodoEntryModel extends Object with _$TodoEntryModelSerializerMixin {
   int id;
   int section;
   String title;
@@ -22,26 +26,6 @@ class TodoEntryModel {
     this.importance = TodoImportance.Low, 
     this.done = false
   });
-
-  TodoEntryModel.fromMap(Map map) {
-    id = map["id"];
-    section = map["section"];
-    title = map["title"];
-    note = map["note"];
-    importance = TodoImportance.values[map["importance"]];
-    done = map["done"] == 1;
-  }
-
-  Map toMap() {
-    return {
-      "id": id,
-      "section": section,
-      "title": title,
-      "note": note,
-      "importance": importance.index,
-      "done": done ? 1 : 0
-    };
-  }
 
   TodoEntryModel copyWith({int id, int section, String title, String note, TodoImportance importance, bool done}) {
     return new TodoEntryModel(
@@ -68,9 +52,12 @@ class TodoEntryModel {
 
   @override
   int get hashCode => id.hashCode ^ section.hashCode ^ title.hashCode ^ note.hashCode ^ importance.hashCode ^ done.hashCode;
+
+  factory TodoEntryModel.fromJson(Map<String, dynamic> json) => _$TodoEntryModelFromJson(json);
 }
 
-class SectionModel {
+@JsonSerializable()
+class SectionModel extends Object with _$SectionModelSerializerMixin {
   int id;
   String title;
 
@@ -78,18 +65,6 @@ class SectionModel {
     @required this.id, 
     @required this.title
   });
-
-  SectionModel.fromMap(Map map) {
-    id = map['id'];
-    title = map['title'];
-  }
-
-  Map toMap() {
-    return {
-      'id': id,
-      'title': title
-    };
-  }
 
   SectionModel copyWith({int id, String title}) {
     return new SectionModel(
@@ -108,4 +83,6 @@ class SectionModel {
 
   @override
   int get hashCode => id.hashCode ^ title.hashCode;
+
+  factory SectionModel.fromJson(Map<String, dynamic> json) => _$SectionModelFromJson(json);
 }

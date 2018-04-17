@@ -11,11 +11,15 @@ dependencies:
   share: ^0.4.0
   redux: ^3.0.0
   flutter_redux: ^0.5.0
+  redux_persist: 0.7.0-rc.2
+  redux_persist_flutter: 0.6.0-rc.1
+  json_annotation: ^0.2.2
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-
+  build_runner: ^0.7.6
+  json_serializable: ^0.3.2
 
 # For information on the generic Dart part of this file, see the
 # following page: https://www.dartlang.org/tools/pub/pubspec
