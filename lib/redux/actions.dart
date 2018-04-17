@@ -24,6 +24,8 @@ class DeleteSectionAction extends ReduxAction {
   DeleteSectionAction(this.section);
 }
 
+class UndoDeletionSectionAction extends ReduxAction { }
+
 class AddTodoAction extends ReduxAction {
   final TodoEntryModel todo;
 
@@ -41,3 +43,7 @@ class DeleteTodoAction extends ReduxAction {
 
   DeleteTodoAction(this.todo);
 }
+
+class UndoDeletionTodoAction extends ReduxAction { }
+
+class AcceptDeletionAction extends ReduxAction { }

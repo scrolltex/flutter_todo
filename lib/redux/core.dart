@@ -11,21 +11,37 @@ class ReduxState {
   final List<TodoEntryModel> todos;
   final List<SectionModel> sections;
 
+  final bool hasEntryBeenDeleted;
+  final SectionModel lastRemovedSection;
+  final List<TodoEntryModel> lastRemovedTodos;
+
   const ReduxState({
     @required this.todos,
-    @required this.sections
+    @required this.sections,
+    this.hasEntryBeenDeleted = false,
+    this.lastRemovedSection,
+    this.lastRemovedTodos
   });
 
   ReduxState.initialState()
       : todos = <TodoEntryModel>[],
-        sections = <SectionModel>[];
+        sections = <SectionModel>[],
+        hasEntryBeenDeleted = false,
+        lastRemovedSection = null,
+        lastRemovedTodos = null;
 
   ReduxState copyWith({
     List<TodoEntryModel> todos, 
-    List<SectionModel> sections
+    List<SectionModel> sections,
+    bool hasEntryBeenDeleted,
+    SectionModel lastRemovedSection,
+    List<TodoEntryModel> lastRemovedTodos
   }) => new ReduxState(
       todos: todos ?? this.todos,
-      sections: sections ?? this.sections
+      sections: sections ?? this.sections,
+      hasEntryBeenDeleted: hasEntryBeenDeleted ?? this.hasEntryBeenDeleted,
+      lastRemovedSection: lastRemovedSection ?? this.lastRemovedSection,
+      lastRemovedTodos: lastRemovedTodos ?? this.lastRemovedTodos,
   );
 
   static ReduxState fromJson(dynamic jsonObj) {
@@ -82,11 +98,29 @@ ReduxState stateReducer(ReduxState state, action) {
     return state.copyWith(sections: newSections);
   }
 
-  if (action is DeleteSectionAction) {    
+  if (action is DeleteSectionAction) {  
     return state.copyWith(
       sections: <SectionModel>[]
         ..addAll(state.sections)
-        ..remove(action.section)
+        ..remove(action.section),
+      todos: <TodoEntryModel>[]
+        ..addAll(state.todos.where((x) => x.section != action.section.id)),
+      hasEntryBeenDeleted: true,
+      lastRemovedSection: action.section,
+      lastRemovedTodos: <TodoEntryModel>[]
+        ..addAll(state.todos.where((x) => x.section == action.section.id))
+    );
+  }
+
+  if (action is UndoDeletionSectionAction) {
+    return state.copyWith(
+      todos: <TodoEntryModel>[]
+        ..addAll(state.todos)
+        ..addAll(state.lastRemovedTodos),
+      sections: <SectionModel>[]
+        ..addAll(state.sections)
+        ..add(state.lastRemovedSection)
+        ..sort((x, y) => x.id.compareTo(y.id))
     );
   }
 
@@ -115,8 +149,24 @@ ReduxState stateReducer(ReduxState state, action) {
     return state.copyWith(
       todos: <TodoEntryModel>[]
         ..addAll(state.todos)
-        ..remove(action.todo)
+        ..remove(action.todo),
+      hasEntryBeenDeleted: true,
+      lastRemovedTodos: <TodoEntryModel>[]
+        ..add(action.todo)
     );
+  }
+
+  if (action is UndoDeletionTodoAction) {
+    return state.copyWith(
+      todos: <TodoEntryModel>[]
+        ..addAll(state.todos)
+        ..addAll(state.lastRemovedTodos)
+        ..sort((x, y) => x.id.compareTo(y.id))
+    );
+  }
+
+  if (action is AcceptDeletionAction) {
+    return state.copyWith(hasEntryBeenDeleted: false);
   }
 
   return state;

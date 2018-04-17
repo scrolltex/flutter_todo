@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../model/todo_entry.dart';
+import '../redux/actions.dart';
 
 class TodoEntryDialog extends StatefulWidget {
   final TodoEntryModel entryToEdit;
@@ -197,8 +198,7 @@ class TodoEntryDialogState extends State<TodoEntryDialog> {
         });
 
     if (confirmDelete != null && confirmDelete) {
-      //TODO: Implement deleting
-      Navigator.pop(context);
+      Navigator.of(context).pop(new DeleteTodoAction(widget.entryToEdit));
     }
   }
 }

@@ -30,11 +30,18 @@ class TodoListViewModel {
   final Function(TodoEntryModel) updateEntryCallback;
   final Function(TodoEntryModel) deleteEntryCallback;
 
+  final bool hasEntryBeenDeleted;
+  final Function() acceptDeletion;
+  final Function() undoEntryDeletion;
+
   TodoListViewModel({
     this.todos,
     this.addEntryCallback,
     this.updateEntryCallback,
-    this.deleteEntryCallback
+    this.deleteEntryCallback,
+    this.hasEntryBeenDeleted,
+    this.acceptDeletion,
+    this.undoEntryDeletion
   });
 }
 
@@ -51,6 +58,7 @@ enum TodoVisibility { All, Undone, Done }
 
 class TodoListPageState extends State<TodoListPage> {
   ScrollController _listViewScrollController = new ScrollController();
+  var _scaffoldKey = new GlobalKey<ScaffoldState>();
 
   @override
   Widget build(BuildContext context) {
@@ -65,9 +73,28 @@ class TodoListPageState extends State<TodoListPage> {
               store.dispatch(new UpdateTodoAction(entry)),
           deleteEntryCallback: (entry) =>
               store.dispatch(new DeleteTodoAction(entry)),
+          hasEntryBeenDeleted: store.state.hasEntryBeenDeleted,
+          acceptDeletion: () =>
+              store.dispatch(new AcceptDeletionAction()),
+          undoEntryDeletion: () =>
+              store.dispatch(new UndoDeletionTodoAction()),
       ),
       builder: (context, viewModel) {
+        if (viewModel.hasEntryBeenDeleted) {
+          new Future<Null>.delayed(Duration.zero, () {
+            _scaffoldKey.currentState.showSnackBar(new SnackBar(
+              content: new Text("Entry deleted"),
+              action: new SnackBarAction(
+                label: "UNDO",
+                onPressed: () => viewModel.undoEntryDeletion(),
+              ),
+            ));
+            viewModel.acceptDeletion();
+          });
+        }
+        
         return new Scaffold(
+          key: _scaffoldKey,
           appBar: new AppBar(
               title: new Text(widget.section.title),
               actions: <Widget>[
@@ -171,15 +198,19 @@ class TodoListPageState extends State<TodoListPage> {
   }
 
   void _editTodoEntry(TodoListViewModel viewModel, TodoEntryModel entry) async {
-    var newEntry = await Navigator.of(context).push<TodoEntryModel>(
-        new MaterialPageRoute<TodoEntryModel>(
+    var action = await Navigator.of(context).push<ReduxAction>(
+        new MaterialPageRoute<ReduxAction>(
           builder: (context) => new TodoEntryDialog.edit(entry),
           fullscreenDialog: true
         )
     );
 
-    if (newEntry != null) {
-      setState(() => viewModel.updateEntryCallback(newEntry));
+    if (action != null) {
+      if (action is UpdateTodoAction) {
+        setState(() => viewModel.updateEntryCallback(action.todo));
+      } else if (action is DeleteTodoAction) {
+        setState(() => viewModel.deleteEntryCallback(action.todo));
+      }
     }
   }
 }

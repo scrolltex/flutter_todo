@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_redux/flutter_redux.dart';
@@ -15,11 +17,25 @@ class SectionsViewModel {
   final Function(SectionModel) updateSectionCallback;
   final Function(SectionModel) deleteSectionCallback;
 
-  SectionsViewModel({this.sections, this.todos, this.addSectionCallback, this.updateSectionCallback, this.deleteSectionCallback});
+  final bool hasEntryBeenDeleted;
+  final Function() acceptDeletion;
+  final Function() undoDeletion;
+
+  SectionsViewModel({
+    this.sections,
+    this.todos, 
+    this.addSectionCallback, 
+    this.updateSectionCallback, 
+    this.deleteSectionCallback,
+    this.hasEntryBeenDeleted,
+    this.acceptDeletion,
+    this.undoDeletion
+  });
 }
 
 class SectionsPage extends StatelessWidget {
   final _listViewScrollController = new ScrollController();
+  final _scaffoldKey = GlobalKey<ScaffoldState>();
 
   @override
   Widget build(BuildContext context) {
@@ -32,10 +48,29 @@ class SectionsPage extends StatelessWidget {
           updateSectionCallback: (section) =>
               store.dispatch(new UpdateSectionAction(section)),
           deleteSectionCallback: (section) =>
-              store.dispatch(new DeleteSectionAction(section))
+              store.dispatch(new DeleteSectionAction(section)),
+          hasEntryBeenDeleted: store.state.hasEntryBeenDeleted,
+          acceptDeletion: () =>
+              store.dispatch(new AcceptDeletionAction()),
+          undoDeletion: () =>
+              store.dispatch(new UndoDeletionSectionAction()),            
       ),                      
       builder: (context, viewModel) {
+        if (viewModel.hasEntryBeenDeleted) {
+          new Future<Null>.delayed(Duration.zero, () {
+            _scaffoldKey.currentState.showSnackBar(new SnackBar(
+              content: new Text("Section deleted"),
+              action: new SnackBarAction(
+                label: "UNDO",
+                onPressed: () => viewModel.undoDeletion(),
+              ),
+            ));
+            viewModel.acceptDeletion();
+          });
+        }
+
         return new Scaffold(
+          key: _scaffoldKey,
           appBar: new AppBar(
             title: new Text("Sections"),
           ),
