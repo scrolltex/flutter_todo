@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
+import 'package:redux/redux.dart';
 import 'package:redux_persist/redux_persist.dart';
 
 import '../model/todo_entry.dart';
@@ -70,104 +71,4 @@ class ReduxState {
     'todos': json.encode(todos),
     'sections': json.encode(sections)
   };
-}
-
-ReduxState stateReducer(ReduxState state, action) {
-  if (action is PersistLoadedAction<ReduxState>) {
-    return action.state ?? state;
-  }
-  
-  if (action is AddSectionAction) {    
-    int maxId = 0;
-    for (var section in state.sections) {
-      if (section.id > maxId) {
-        maxId = section.id;
-      }
-    }
-
-    return state.copyWith(
-      sections: <SectionModel>[]
-        ..addAll(state.sections)
-        ..add(action.section.copyWith(id: maxId + 1)));
-  }
-
-  if (action is UpdateSectionAction) {
-    var newSections = <SectionModel>[]..addAll(state.sections);
-    newSections[newSections.indexWhere((section) => section.id == action.section.id)] = action.section;
-    
-    return state.copyWith(sections: newSections);
-  }
-
-  if (action is DeleteSectionAction) {  
-    return state.copyWith(
-      sections: <SectionModel>[]
-        ..addAll(state.sections)
-        ..remove(action.section),
-      todos: <TodoEntryModel>[]
-        ..addAll(state.todos.where((x) => x.section != action.section.id)),
-      hasEntryBeenDeleted: true,
-      lastRemovedSection: action.section,
-      lastRemovedTodos: <TodoEntryModel>[]
-        ..addAll(state.todos.where((x) => x.section == action.section.id))
-    );
-  }
-
-  if (action is UndoDeletionSectionAction) {
-    return state.copyWith(
-      todos: <TodoEntryModel>[]
-        ..addAll(state.todos)
-        ..addAll(state.lastRemovedTodos),
-      sections: <SectionModel>[]
-        ..addAll(state.sections)
-        ..add(state.lastRemovedSection)
-        ..sort((x, y) => x.id.compareTo(y.id))
-    );
-  }
-
-  if (action is AddTodoAction) {
-    int maxId = 0;
-    for (var todo in state.todos) {
-      if (todo.id > maxId) {
-        maxId = todo.id;
-      }
-    }
-
-    return state.copyWith(
-      todos: <TodoEntryModel>[]
-        ..addAll(state.todos)
-        ..add(action.todo.copyWith(id: maxId + 1)));
-  }
-
-  if (action is UpdateTodoAction) {
-    var newTodos = <TodoEntryModel>[]..addAll(state.todos);
-    newTodos[newTodos.indexWhere((todo) => todo.id == action.todo.id)] = action.todo;
-    
-    return state.copyWith(todos: newTodos);
-  }
-
-  if (action is DeleteTodoAction) {    
-    return state.copyWith(
-      todos: <TodoEntryModel>[]
-        ..addAll(state.todos)
-        ..remove(action.todo),
-      hasEntryBeenDeleted: true,
-      lastRemovedTodos: <TodoEntryModel>[]
-        ..add(action.todo)
-    );
-  }
-
-  if (action is UndoDeletionTodoAction) {
-    return state.copyWith(
-      todos: <TodoEntryModel>[]
-        ..addAll(state.todos)
-        ..addAll(state.lastRemovedTodos)
-        ..sort((x, y) => x.id.compareTo(y.id))
-    );
-  }
-
-  if (action is AcceptDeletionAction) {
-    return state.copyWith(hasEntryBeenDeleted: false);
-  }
-
-  return state;
 }

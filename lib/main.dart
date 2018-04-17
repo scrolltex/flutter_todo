@@ -5,6 +5,7 @@ import 'package:redux_persist/redux_persist.dart';
 import 'package:redux_persist_flutter/redux_persist_flutter.dart';
 
 import 'redux/core.dart';
+import 'redux/reducers.dart';
 import 'pages/sections_page.dart';
 
 void main() => runApp(new MyApp());
