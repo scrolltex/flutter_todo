@@ -1,11 +1,8 @@
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
-import 'package:redux/redux.dart';
-import 'package:redux_persist/redux_persist.dart';
 
 import '../model/todo_entry.dart';
-import 'actions.dart';
 
 @immutable
 class ReduxState {
