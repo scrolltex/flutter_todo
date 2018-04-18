@@ -43,24 +43,20 @@ class ReduxState {
   );
 
   static ReduxState fromJson(dynamic jsonObj) {
-    // Parsing sections
-    var loadedSectionsList = new List<SectionModel>();
-    var loadedSections = json.decode(jsonObj['sections']);
-    for (var item in loadedSections) {
-      loadedSectionsList.add(new SectionModel.fromJson(item));
-    }
-
     // Parsing todos
-    var loadedTodosList = new List<TodoEntryModel>();
-    var loadedTodos = json.decode(jsonObj['todos']);
-    for (var item in loadedTodos) {
-      loadedTodosList.add(new TodoEntryModel.fromJson(item));
-    }
+    var loadedTodos = (json.decode(jsonObj['todos']) as List)
+      .map((item) => new TodoEntryModel.fromJson(item as Map<String, dynamic>))
+      .toList();
+
+    // Parsing sections
+    var loadedSections = (json.decode(jsonObj['sections']) as List)
+      .map((item) => new SectionModel.fromJson(item as Map<String, dynamic>))
+      .toList();
 
     // Return state
     return new ReduxState(
-      todos: loadedTodosList,
-      sections: loadedSectionsList
+      todos: loadedTodos,
+      sections: loadedSections
     );
   }
 
